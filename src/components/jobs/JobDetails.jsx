@@ -1,73 +1,59 @@
-import React, { useEffect, useState } from 'react';
-import Navbar from '../Navbar';
-import { useSearchParams } from 'react-router-dom';
+import React, { useEffect, useState } from "react";
+import Navbar from "../Navbar";
+import { useSearchParams } from "react-router-dom";
 
 const JobDetails = () => {
   const [searchParams] = useSearchParams();
-  const jobapi = 'http://localhost:5001/api/v1/job';
-  const [job, setJob] = useState(null); // Initialize with null to represent no data yet
-  const [loading, setLoading] = useState(true); // Add a loading state
-  const [error, setError] = useState(null); // Add an error state
+  const jobapi = "http://localhost:5001/api/v1/job";
+  const [job, setJob] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [appliedJobs, setAppliedJobs] = useState([]); // State for applied jobs
 
   useEffect(() => {
-    const jobId = searchParams.get('id');
+    const jobId = searchParams.get("id");
     const findJob = async () => {
       try {
         const res = await fetch(`${jobapi}/findjob?id=${jobId}`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
         });
 
-        if (!res.ok) {
-          throw new Error('Failed to fetch job details');
-        }
+        if (!res.ok) throw new Error("Failed to fetch job details");
 
         const data = await res.json();
         setJob(data.job);
       } catch (err) {
         setError(err.message);
       } finally {
-        setLoading(false); // Ensure loading state is updated
+        setLoading(false);
       }
     };
 
     findJob();
   }, [searchParams]);
 
-  if (loading) {
-    return (
-      <div>
-        <Navbar />
-        <div className="container px-24 mx-auto pt-8">
-          <p>Loading job details...</p>
-        </div>
-      </div>
-    );
-  }
+  const handleApply = async () => {
+    try {
+      const res = await fetch(`${jobapi}/applyjob?id=${job._id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+      });
 
-  if (error) {
-    return (
-      <div>
-        <Navbar />
-        <div className="container px-24 mx-auto pt-8">
-          <p className="text-red-500">Error: {error}</p>
-        </div>
-      </div>
-    );
-  }
+      if (!res.ok) throw new Error("Failed to apply for job");
 
-  if (!job) {
-    return (
-      <div>
-        <Navbar />
-        <div className="container px-24 mx-auto pt-8">
-          <p className="text-gray-500">Job not found.</p>
-        </div>
-      </div>
-    );
-  }
+      const data = await res.json();
+      console.log(data);
+      setAppliedJobs(data.appliedJobs); // Update applied jobs state
+    } catch (error) {
+      console.error(error.message);
+    }
+  };
+
+  if (loading) return <p>Loading job details...</p>;
+  if (error) return <p className="text-red-500">Error: {error}</p>;
+  if (!job) return <p className="text-gray-500">Job not found.</p>;
 
   return (
     <div>
@@ -85,7 +71,8 @@ const JobDetails = () => {
 
           <button
             type="button"
-            className="text-white bg-[#451d9b] hover:bg-[#050708]/90 focus:ring-4 focus:outline-none focus:ring-[#050708]/50 font-medium rounded-lg text-sm px-5 py-2 text-center inline-flex items-center dark:focus:ring-[#050708]/50 dark:hover:bg-[#050708]/30 me-2 mb-2 justify-center"
+            onClick={handleApply}
+            className="text-white bg-[#451d9b] cursor-pointer hover:bg-[#050708]/90 focus:ring-4 focus:outline-none focus:ring-[#050708]/50 font-medium rounded-lg text-sm px-5 py-2"
           >
             Apply
           </button>
@@ -97,39 +84,43 @@ const JobDetails = () => {
         </div>
 
         <div className="informations flex flex-col gap-1 mt-10">
-          <div className="field">
-            <span className="font-semibold">Role: </span>
-            <span className="text-gray-700">{job.title}</span>
-          </div>
-          <div className="field">
-            <span className="font-semibold">Location: </span>
-            <span className="text-gray-700">{job.location}</span>
-          </div>
-          <div className="field">
-            <span className="font-semibold">Description: </span>
-            <span className="text-gray-700">{job.description}</span>
-          </div>
-          <div className="field">
-            <span className="font-semibold">Experience: </span>
-            <span className="text-gray-700">{job.minexp}</span>
-          </div>
-          <div className="field">
-            <span className="font-semibold">Salary: </span>
-            <span className="text-gray-700">{job.salary}</span>
-          </div>
-          <div className="field">
-            <span className="font-semibold">Total Applicants: </span>
-            <span className="text-gray-700">45336</span>
-          </div>
-          <div className="field">
-            <span className="font-semibold">Posted Date: </span>
-            <span className="text-gray-700">{new Date(job.createdAt).toLocaleDateString()}</span>
-          </div>
-          <div className="field">
-            <span className="font-semibold">Apply By: </span>
-            <span className="text-gray-700">{new Date(job.deadline).toLocaleDateString()}</span>
-          </div>
+          <div className="field"><span className="font-semibold">Role: </span>{job.title}</div>
+          <div className="field"><span className="font-semibold">Location: </span>{job.location}</div>
+          <div className="field"><span className="font-semibold">Description: </span>{job.description}</div>
+          <div className="field"><span className="font-semibold">Experience: </span>{job.minexp} years</div>
+          <div className="field"><span className="font-semibold">Salary: </span>₹{job.salary}</div>
+          <div className="field"><span className="font-semibold">Posted Date: </span>{new Date(job.createdAt).toLocaleDateString()}</div>
+          <div className="field"><span className="font-semibold">Apply By: </span>{new Date(job.deadline).toLocaleDateString()}</div>
         </div>
+
+        {/* Applied Jobs Table */}
+        {appliedJobs.length > 0 && (
+          <div className="mt-10">
+            <h2 className="text-xl font-semibold mb-4">Applied Jobs</h2>
+            <table className="w-full border-collapse border border-gray-300">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="border p-2">Title</th>
+                  <th className="border p-2">Location</th>
+                  <th className="border p-2">Experience</th>
+                  <th className="border p-2">Salary</th>
+                  <th className="border p-2">Deadline</th>
+                </tr>
+              </thead>
+              <tbody>
+                {appliedJobs.map((job, index) => (
+                  <tr key={index} className="text-center">
+                    <td className="border p-2">{job.title}</td>
+                    <td className="border p-2">{job.location}</td>
+                    <td className="border p-2">{job.minexp} years</td>
+                    <td className="border p-2">₹{job.salary}</td>
+                    <td className="border p-2">{new Date(job.deadline).toLocaleDateString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );

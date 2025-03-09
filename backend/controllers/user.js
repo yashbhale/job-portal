@@ -1,5 +1,6 @@
 import { user} from "../models/user.js";
 import bcrypt from 'bcrypt'
+import Cookies from 'js-cookie'
 import jwt from  "jsonwebtoken"
 
 
@@ -78,14 +79,15 @@ export const login = async (req, res) => {
         }
 
         const tokenData = { userId: user1._id };
-        const token = jwt.sign(tokenData, process.env.SECRET_KEY, { expiresIn: '1d' });
-        console.log("no error in login backend")
+        const token = jwt.sign(tokenData, process.env.SECRET_KEY, { expiresIn: '3d' });
+        console.log("no error in login backend",process.env.SECRET_KEY);
         return res
             .status(200)
             .cookie("token", token, {
-                maxAge: 1 * 24 * 60 * 60 * 1000,
-                httpOnly: true, // Corrected from httpsOnly
-                sameSite: 'strict',
+                maxAge:3*24*3600*1000,
+                httpOnly:true,
+                sameSite: 'None',
+                secure: process.env.NODE_ENV === 'production'
             })
             .json({
                 message: "Login successful.",

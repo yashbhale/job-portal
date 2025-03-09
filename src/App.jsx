@@ -12,6 +12,7 @@ import Postjob from './components/jobs/Postjob.jsx'
 import Displayjobs from './components/jobs/Displayjobs.jsx'
 import JobDetails from './components/jobs/JobDetails.jsx'
 import Loger from './components/jobs/Loger.jsx'
+import Profile from './components/userauth/Profile.jsx'
 
 const approuter= createBrowserRouter([
   {
@@ -53,6 +54,10 @@ const approuter= createBrowserRouter([
   {
     path:'hello',
     element:<Loger/>,
+  },
+  {
+    path:'profile',
+    element:<Profile/>,
   },
 ]);
 

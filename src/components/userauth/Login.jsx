@@ -1,6 +1,7 @@
 import React, {useState} from 'react'
 import Navbar from '../Navbar.jsx'
 import { useNavigate } from 'react-router-dom';
+import Cookies from 'js-cookie';
 
 const Login = () => {
 
@@ -26,15 +27,17 @@ const Login = () => {
         headers: {
             'Content-Type':'application/json',
         },
+        credentials:'include',
         body:JSON.stringify(form),
     })
     const data=await res.json();
     console.log("hi");
+    await Cookies.set('token',data.token);
     await console.log(data);
     if(data.success==true)
     {
       console.log("Login Successful");
-      navigate('/');
+      navigate('/profile');
     }
     else {
       console.log("Name or password doesnt match");

@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import {user} from "./user.js"
 
 const schema = new mongoose.Schema({
     title: String,
@@ -12,7 +13,8 @@ const schema = new mongoose.Schema({
     pos:Number,
     jobtype:String,
     deadline: {type:Date},
-    createdAt: {type:Date,default:Date.now}
+    createdAt: {type:Date,default:Date.now},
+    users: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
 });
 
 export const job=mongoose.models.job || mongoose.model('job',schema);
