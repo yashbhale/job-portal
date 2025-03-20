@@ -8,12 +8,12 @@ const schema = new mongoose.Schema({
         skills: {
             type:[String],
         },
-        resume: String,
+        resume: { type: String, default: null },
         resumename: String,
         cgpa: Number,
         experience: Number,
         gradyear:Number,
-    photo: String,
+        photo: { type: String, default: null },
     
 },{timestamps:true});
 

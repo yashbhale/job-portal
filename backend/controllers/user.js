@@ -3,7 +3,6 @@ import bcrypt from 'bcrypt'
 import Cookies from 'js-cookie'
 import jwt from  "jsonwebtoken"
 
-
 export const register = async(req,res)=> {
 
     try {
@@ -46,6 +45,8 @@ export const register = async(req,res)=> {
     }
     
 }
+
+
 
 export const login = async (req, res) => {
     try {

@@ -46,21 +46,47 @@ export const createjob = async(req,res)=> {
     }
 }
 
-export const DisplayAllJobs=async(req,res)=> {
-    const jobfull=await job.find().populate('comp');
-    // console.log(job);
-    if(!job) {
-        console.log("No Job found");
+export const DisplayAllJobs = async (req, res) => {
+    try {
+        const searchQuery = req.query.search;
+        let jobfull;
+
+        if (searchQuery) {
+            // Filter jobs based on title, location, description, etc.
+            jobfull = await job.find({
+                $or: [
+                    { title: { $regex: searchQuery, $options: "i" } },
+                    { location: { $regex: searchQuery, $options: "i" } },
+                    { description: { $regex: searchQuery, $options: "i" } },
+                ]
+            }).populate('comp');
+        } else {
+            // If no search, fetch all
+            jobfull = await job.find().populate('comp');
+        }
+
+        if (!jobfull || jobfull.length === 0) {
+            return res.status(404).json({
+                message: "No jobs found",
+                success: false,
+            });
+        }
+
+        console.log("Jobs fetched");
+        return res.status(200).json({
+            message: "Jobs fetched successfully",
+            success: true,
+            job: jobfull,
+        });
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({
+            message: "Error fetching jobs",
+            success: false,
+        });
     }
-
-    console.log("Jobs fetched")
-    return res.status(201).json({
-        message:"fetched all jobs",
-        success:true,
-        job:jobfull,
-    })
-
 }
+
 
 
 // import Job from "../models/Job.js"; // Assuming Job is your Mongoose model
@@ -80,11 +106,11 @@ export const Userjobs = async (req, res) => {
     }
 
     try {
-        // Fetch jobs where the `user` field matches `userid`
-        const userjobs = await job.find({ user: userid });
+        // Correcting the query to check if userid exists in the users array
+        const userjobs = await job.find({ users: { $in: [userid] } });
 
         if (!userjobs.length) {
-            console.log("No jobs found for user");
+            // console.log("No jobs found for user");
             return res.status(404).json({
                 message: "No jobs found",
                 success: false,
@@ -105,6 +131,7 @@ export const Userjobs = async (req, res) => {
         });
     }
 };
+
 
 
 export const Findjob=async(req,res)=>{

@@ -38,6 +38,7 @@ export const registerc = async(req,res)=> {
 export const loginc = async(req,res)=> {
     try {
         const {email,password}=req.body;
+        console.log("xxxxxxxxx",req.body)
         const user=await company.findOne({email});
         if (!user) {
             console.log("error3");
