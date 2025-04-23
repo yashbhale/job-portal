@@ -3,67 +3,99 @@ import bcrypt from 'bcrypt'
 import Cookies from 'js-cookie'
 import jwt from  "jsonwebtoken"
 
-import multer from 'multer';
+// import multer from 'multer';
 import path from 'path';
 
-// Configure Multer for file storage
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/'); // Store files in the 'uploads' folder
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname)); // Unique filename
-  }
-});
-
+import multer from 'multer';
+const storage = multer.memoryStorage(); // store file in memory
 const upload = multer({ storage });
+export const uploadResume = upload.single('resume');
+
+
+
+import cloudinary from '../config/cloudinaryConfig.js';
+import streamifier from 'streamifier'; // For streaming buffer to Cloudinary
 
 export const register = async (req, res) => {
-    try {
-      console.log("Received body:", req.body);
-      console.log("Received file:", req.file);
-  
-      const { name, email, password, phoneno } = req.body;
-      if (!name || !email || !password || !phoneno) {
-        return res.status(400).json({
-          message: "All details are required",
-          success: false,
-        });
-      }
-  
-      const userExists = await user.findOne({ email });
-      if (userExists) {
-        return res.status(400).json({
-          message: "User already exists",
-          success: false,
-        });
-      }
-  
-      const hashedPassword = await bcrypt.hash(password, 10);
-      const newUser = new user({
-        name,
-        email,
-        password: hashedPassword,
-        phoneno,
-        resume: req.file ? `/uploads/${req.file.filename}` : null, // Save resume path
-        resumename: req.file ? req.file.originalname : null
+  try {
+    const { name, email, password, phoneno } = req.body;
+
+    if (!name || !email || !password || !phoneno) {
+      return res.status(400).json({
+        message: "All details are required",
+        success: false,
       });
-  
-      await newUser.save();
-      return res.status(201).json({
-        message: "User registered successfully",
-        success: true,
-      });
-  
-    } catch (error) {
-      console.error(error);
-      return res.status(500).json({ message: "Internal server error", success: false });
     }
-  };
+
+    const userExists = await user.findOne({ email });
+    if (userExists) {
+      return res.status(400).json({
+        message: "User already exists",
+        success: false,
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    let resumeUrl = null;
+    let resumename = null;
+
+    if (req.file) {
+      resumename = req.file.originalname;
+    
+      const streamUpload = (buffer) => {
+        return new Promise((resolve, reject) => {
+          const stream = cloudinary.uploader.upload_stream(
+            {
+              resource_type: 'auto', // <-- This is key
+              folder: 'resumes',
+              public_id: resumename.split('.')[0],
+              use_filename: true,
+              unique_filename: true,
+            },
+            (error, result) => {
+              if (result) {
+                resolve(result);
+              } else {
+                reject(error);
+              }
+            }
+          );
+          streamifier.createReadStream(buffer).pipe(stream);
+        });
+      };
+    
+      const result = await streamUpload(req.file.buffer);
+      resumeUrl = result.secure_url;
+    }
+    
+
+    const newUser = new user({
+      name,
+      email,
+      password: hashedPassword,
+      phoneno,
+      resume: resumeUrl,     // Store Cloudinary URL
+      resumename: resumename // Store original filename
+    });
+
+    await newUser.save();
+
+    return res.status(201).json({
+      message: "User registered successfully",
+      success: true,
+    });
+
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Internal server error", success: false });
+  }
+};
+
   
 
 // Middleware to handle resume uploads
-export const uploadResume = upload.single('resume');
+// export const uploadResume = upload.single('resume');
 
 
 
@@ -171,4 +203,41 @@ export const updateprofile= async(req,res)=> {
         success:true,
     })
 }
+
+
+
+export const getResumeUrl = async (req, res) => {
+  try {
+    const userId = req.id; // e.g., /user/resume/:id
+
+    const userData = await user.findById(userId);
+    if (!userData) {
+      return res.status(404).json({
+        message: "User not found",
+        success: false,
+      });
+    }
+
+    if (!userData.resume) {
+      return res.status(404).json({
+        message: "Resume not uploaded",
+        success: false,
+      });
+    }
+
+    return res.status(200).json({
+      message: "Resume URL fetched successfully",
+      resumeUrl: userData.resume,
+      success: true,
+    });
+
+  } catch (error) {
+    console.error("Error fetching resume URL:", error.message);
+    return res.status(500).json({
+      message: "Internal server error",
+      success: false,
+    });
+  }
+};
+
 

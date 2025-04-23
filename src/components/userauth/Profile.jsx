@@ -7,6 +7,8 @@ import { faList } from "@fortawesome/free-solid-svg-icons";
 const Profile = () => {
     const [jobs, setJobs] = useState([]);
     const jobapi = "http://localhost:5001/api/v1/job";
+    const userapi = "http://localhost:5001/api/v1/user";
+    const [resume, setResume] = useState(null);
 
     const navigate = useNavigate();
 
@@ -24,6 +26,7 @@ const Profile = () => {
                 const data = await res.json();
                 console.log(data);
 
+                setResume(data.resume); // Assuming the resume URL is in the response
                 if (data.success) {
                     setJobs(data.jobs);
                 } else {
@@ -35,6 +38,33 @@ const Profile = () => {
         };
 
         fetchJobs();
+
+        // const getResume = async () => {
+        //     try {
+        //         const res = await fetch(`${userapi}/getresume`, {
+        //             method: "GET",
+        //             headers: {
+        //                 "Content-Type": "application/json",
+        //             },
+        //             credentials: "include",
+        //         });
+
+        //         const data = await res.json();
+        //         console.log(data);
+
+        //         if (data.success) {
+        //             setResume(data.resume);
+        //         } else {
+        //             console.log("Failed to fetch jobs:", data.message);
+        //         }
+        //     } catch (error) {
+        //         console.error("Error fetching jobs:", error);
+        //     }
+        // };
+
+        fetchJobs();
+        // getResume();
+
     }, []);
 
     const handleclick=async()=> {
@@ -130,6 +160,30 @@ const Profile = () => {
                     </tbody>
                 </table>
             </div>
+            <div>
+        
+            <div className="resumecontainer max-w-4xl mx-auto bg-white rounded-2xl shadow-lg p-6 mt-8">
+  <h1 className="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">Resume</h1>
+
+  {resume ? (
+    <div className="relative w-full overflow-hidden rounded-lg shadow">
+      <iframe 
+        src={resume} 
+        width="100%" 
+        height="600px" 
+        className="w-full h-[600px] border-none rounded-lg"
+        title="User Resume"
+      ></iframe>
+    </div>
+  ) : (
+    <div className="text-center text-gray-500 py-20">
+      <p className="text-lg">Loading resume...</p>
+    </div>
+  )}
+</div>
+
+        
+    </div>
         </div>
     );
 };

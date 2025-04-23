@@ -57,6 +57,9 @@ const Register = () => {
   return (
     <>
       <Navbar />
+      
+
+      
       <div className='main h-screen w-full relative bg-white pt-10'>
         <div className="container shadow-xl border rounded-xl h-[80%] justify-center w-1/2 p-3 px-6 bg-white mx-auto flex flex-col">
           <h1 className='font-bold text-2xl mb-8 mx-auto text-center'>Register</h1>

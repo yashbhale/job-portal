@@ -106,6 +106,16 @@ export const Userjobs = async (req, res) => {
     }
 
     try {
+        const curruser= await user.findById(userid);
+        const resumeurl=curruser.resume;
+        console.log("Resume URL:", resumeurl);
+        if (!resumeurl) {
+            console.log("Resume not found for user");
+            return res.status(404).json({
+                message: "Resume not found",
+                success: false,
+            });
+        }
         // Correcting the query to check if userid exists in the users array
         const userjobs = await job.find({ users: { $in: [userid] } });
 
@@ -114,14 +124,20 @@ export const Userjobs = async (req, res) => {
             return res.status(404).json({
                 message: "No jobs found",
                 success: false,
+                resume: resumeurl,
+
             });
         }
+
+        
 
         console.log("User jobs found:", userjobs);
 
         return res.status(200).json({
             jobs: userjobs,
             success: true,
+            resume: resumeurl,
+            message: "Jobs fetched successfully",
         });
     } catch (error) {
         console.error("Error fetching user jobs:", error);

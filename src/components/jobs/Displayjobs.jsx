@@ -1,85 +1,160 @@
 import React, { useEffect, useState } from 'react'
 import Navbar from '../Navbar'
 import { useNavigate, useLocation } from 'react-router-dom';
+import { FiBookmark, FiClock, FiMapPin, FiDollarSign, FiBriefcase } from 'react-icons/fi';
 
 const Displayjobs = () => {
-
     const [jobs, setJobs] = useState([]);
+    const [loading, setLoading] = useState(true);
     const jobapi = "http://localhost:5001/api/v1/job";
     const navigate = useNavigate();
     const location = useLocation();
 
     useEffect(() => {
         const fetchjobs = async () => {
-            const searchParams = new URLSearchParams(location.search);
-            const searchQuery = searchParams.get('search'); // Get 'search' query param
-            
-            let url = `${jobapi}/displayjobs`;
-            if (searchQuery) {
-                url += `?search=${searchQuery}`; // Add search param to API URL
-            }
+            try {
+                setLoading(true);
+                const searchParams = new URLSearchParams(location.search);
+                const searchQuery = searchParams.get('search');
+                
+                let url = `${jobapi}/displayjobs`;
+                if (searchQuery) {
+                    url += `?search=${searchQuery}`;
+                }
 
-            const res = await fetch(url, {
-                method: "GET",
-                headers: { // You had 'header' instead of 'headers'
-                    "Content-Type": "application/json",
-                },
-            })
-            const data = await res.json();
-            console.log(data);
-            setJobs(data.job);
+                const res = await fetch(url, {
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                });
+                const data = await res.json();
+                setJobs(data.job);
+            } catch (error) {
+                console.error("Error fetching jobs:", error);
+            } finally {
+                setLoading(false);
+            }
         }
         fetchjobs();
-    }, [location.search]); // Refetch if URL changes (search query changes)
+    }, [location.search]);
 
     const handleclick = (path) => {
         navigate(`${path}`);
     }
 
+    // Format date to "X days ago"
+    const formatDate = (dateString) => {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+        return `${diffDays} ${diffDays === 1 ? 'day' : 'days'} ago`;
+    }
+
+    // Truncate description to 100 characters
+    const truncateDescription = (text) => {
+        return text.length > 100 ? `${text.substring(0, 100)}...` : text;
+    }
+
     return (
-        <div>
+        <div className="min-h-screen bg-gray-50">
             <Navbar />
-            <p className='h-10 px-28 mt-10 mx-auto text-xl font-bold'>
-                Search Results: {jobs.length} jobs found
-            </p>
-            <div className="container mx-auto mt-10 h-screen grid grid-cols-3 gap-10 p-10 px-22">
-                {
-                    jobs.map((job) => (
-                        <div key={job._id} className="card flex flex-col w-96 h-80 shadow-xl p-4 rounded-lg border">
-                            <div className="upper flex justify-between">
-                                <p className='text-gray-400'>2 days ago</p>
-                                <img src='../../../public/bookmark.png' width={24}></img>
-                            </div>
+            
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <div className="flex justify-between items-center mb-8">
+                    <h1 className="text-2xl font-bold text-gray-800">
+                        {jobs.length} {jobs.length === 1 ? 'Job' : 'Jobs'} Found
+                    </h1>
+                    {/* Add search/filter components here if needed */}
+                </div>
 
-                            <div className="namer flex items-center gap-4 mt-3 ml-4">
-                                <div className="square border rounded-md w-10 h-10 pl-1 pt-1">
-                                    <img className='' src='https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/768px-Google_%22G%22_logo.svg.png' width={32}></img>
+                {loading ? (
+                    <div className="flex justify-center items-center h-64">
+                        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
+                    </div>
+                ) : jobs.length === 0 ? (
+                    <div className="text-center py-12">
+                        <h3 className="text-lg font-medium text-gray-700">No jobs found</h3>
+                        <p className="mt-2 text-gray-500">Try adjusting your search criteria</p>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {jobs.map((job) => (
+                            <div 
+                                key={job._id} 
+                                className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 border border-gray-100"
+                            >
+                                <div className="p-6">
+                                    <div className="flex justify-between items-start">
+                                        <span className="inline-flex items-center text-sm text-gray-500">
+                                            <FiClock className="mr-1" />
+                                            {formatDate(job.createdAt || new Date())}
+                                        </span>
+                                        <button className="text-gray-400 hover:text-purple-600">
+                                            <FiBookmark />
+                                        </button>
+                                    </div>
+
+                                    <div className="mt-4 flex items-center">
+                                        <div className="flex-shrink-0">
+                                            <img 
+                                                className="h-12 w-12 rounded-lg object-contain border border-gray-200" 
+                                                src={job.comp.logo || 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/768px-Google_%22G%22_logo.svg.png'} 
+                                                alt={job.comp.name}
+                                                onError={(e) => {
+                                                    e.target.onerror = null;
+                                                    e.target.src = 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/768px-Google_%22G%22_logo.svg.png';
+                                                }}
+                                            />
+                                        </div>
+                                        <div className="ml-4">
+                                            <h3 className="text-lg font-semibold text-gray-800">{job.comp.name}</h3>
+                                            <div className="flex items-center text-sm text-gray-500">
+                                                <FiMapPin className="mr-1" />
+                                                {job.location}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <h2 className="mt-4 text-xl font-bold text-gray-900">{job.title}</h2>
+                                    <p className="mt-2 text-gray-600">
+                                        {truncateDescription(job.description)}
+                                    </p>
+
+                                    <div className="mt-4 flex flex-wrap gap-2">
+                                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                            <FiBriefcase className="mr-1" />
+                                            {job.type || 'Full-time'}
+                                        </span>
+                                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                            <FiDollarSign className="mr-1" />
+                                            {job.salary || 'Negotiable'}
+                                        </span>
+                                        {job.positions && (
+                                            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                {job.positions} positions
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    <div className="mt-6 flex space-x-3">
+                                        <button 
+                                            onClick={() => handleclick(`/jobs/details?id=${job._id}`)}
+                                            className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-300"
+                                        >
+                                            View Details
+                                        </button>
+                                        <button 
+                                            className="flex-1 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium py-2 px-4 rounded-lg transition-colors duration-300"
+                                        >
+                                            Save
+                                        </button>
+                                    </div>
                                 </div>
-                                <div className="title flex flex-col">
-                                    <div className="name text-lg font-bold">{job.comp.name}</div>
-                                    <div className="country text-gray-300">{job.location}</div>
-                                </div>
                             </div>
-                            <div className="head text-lg font-bold mt-3">{job.title}</div>
-                            <p className='text-gray-500 justify-normal text-sm'>{job.description}</p>
-
-                            <div className="desc flex gap-2 mt-3">
-                                <div className="border p-1 oval rounded-2xl text-sm text-blue-400">12 Positions</div>
-                                <div className="border p-1 oval rounded-2xl text-sm text-blue-400">Part time</div>
-                                <div className="border p-1 oval rounded-2xl text-sm text-blue-400">{job.salary}</div>
-                            </div>
-                            <div className="buttons flex gap-1 mt-3">
-                                <button type="button" onClick={() => handleclick(`/jobs/details?id=${job._id}`)} className="cursor-pointer border bg-[#f5f7f7] hover:bg-[#050708]/90 focus:ring-4 focus:outline-none focus:ring-[#050708]/50 font-medium rounded-lg text-sm px-5 py-2 text-center inline-flex items-center dark:focus:ring-[#050708]/50 dark:hover:bg-[#050708]/30 me-2 mb-2 justify-center">
-                                    Details
-                                </button>
-                                <button type="button" className="text-white bg-[#451d9b] hover:bg-[#050708]/90 focus:ring-4 focus:outline-none focus:ring-[#050708]/50 font-medium rounded-lg text-sm px-5 py-2 text-center inline-flex items-center dark:focus:ring-[#050708]/50 dark:hover:bg-[#050708]/30 me-2 mb-2 justify-center">
-                                    Save for later
-                                </button>
-                            </div>
-
-                        </div>
-                    ))
-                }
+                        ))}
+                    </div>
+                )}
             </div>
         </div>
     )
