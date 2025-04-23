@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import {user} from "./user.js"
+import {company} from "./company.js"
 
 const schema = new mongoose.Schema({
     title: String,

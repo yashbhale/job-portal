@@ -35,6 +35,7 @@ export const registerc = async(req,res)=> {
     }
 }
 
+
 export const loginc = async(req,res)=> {
     try {
         const {email,password}=req.body;

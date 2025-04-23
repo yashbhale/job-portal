@@ -3,48 +3,68 @@ import bcrypt from 'bcrypt'
 import Cookies from 'js-cookie'
 import jwt from  "jsonwebtoken"
 
-export const register = async(req,res)=> {
+import multer from 'multer';
+import path from 'path';
 
+// Configure Multer for file storage
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/'); // Store files in the 'uploads' folder
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname)); // Unique filename
+  }
+});
+
+const upload = multer({ storage });
+
+export const register = async (req, res) => {
     try {
-        const {name,email,password,phoneno}=req.body;
-        if(!name || !email ||!password ||!phoneno) {
-            console.log("error here1");
-            return res.status(400).json({
-                message:"All details are not there",
-                success:false,
-            });
-        }
-
-        const userone= await user.findOne({email});
-        console.log("1111111111111111")
-        if(userone) {
-            console.log("error here2",email,userone);
-            return res.status(400).json({
-                message:"User already Exists",
-                success:false,
-            })
-        }
-
-        const hashedpassword= await bcrypt.hash(password,10);
-
-        await user.create({
-            name,
-            email,
-            password:hashedpassword,
-            phoneno,
+      console.log("Received body:", req.body);
+      console.log("Received file:", req.file);
+  
+      const { name, email, password, phoneno } = req.body;
+      if (!name || !email || !password || !phoneno) {
+        return res.status(400).json({
+          message: "All details are required",
+          success: false,
         });
-        return res.status(201).json({
-            message: "User registered successfully",
-            success: true,
+      }
+  
+      const userExists = await user.findOne({ email });
+      if (userExists) {
+        return res.status(400).json({
+          message: "User already exists",
+          success: false,
         });
-        
-    } catch(error) {
-        console.error(error);
-        console.log("error here3");
-        return res.status(500).json({message:"Internal sever error",success:false});
+      }
+  
+      const hashedPassword = await bcrypt.hash(password, 10);
+      const newUser = new user({
+        name,
+        email,
+        password: hashedPassword,
+        phoneno,
+        resume: req.file ? `/uploads/${req.file.filename}` : null, // Save resume path
+        resumename: req.file ? req.file.originalname : null
+      });
+  
+      await newUser.save();
+      return res.status(201).json({
+        message: "User registered successfully",
+        success: true,
+      });
+  
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ message: "Internal server error", success: false });
     }
-    
-}
+  };
+  
+
+// Middleware to handle resume uploads
+export const uploadResume = upload.single('resume');
+
 
 
 
