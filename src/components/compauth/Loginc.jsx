@@ -10,7 +10,7 @@ const Loginc = () => {
     password:'',
   });
   const navigate=useNavigate();
-  const userapi="http://localhost:5001/api/v1/user"
+  const userapi="http://localhost:5001/api/v1/user"                     
   const compapi="http://localhost:5001/api/v1/company"
 
   const handleChange=(e)=> {
