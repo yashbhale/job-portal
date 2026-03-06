@@ -18,9 +18,11 @@ app.use('/uploads', express.static('uploads'));
 app.use(express.json());
 app.use(cookieParser());
 // app.use(express.urlencoded({ extended: true }));
-app.use("/api/v1/user",userrouter);
+app.use("/api/v1/user",userrouter);       
 app.use('/api/v1/company',companyrouter);
 app.use('/api/v1/job',jobrouter);
+
+app.use("/api/ai",airoute);
 
 app.get('/',(req,res)=>{
     res.send('Api is working')

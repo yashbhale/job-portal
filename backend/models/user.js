@@ -14,6 +14,12 @@ const schema = new mongoose.Schema({
         experience: Number,
         gradyear:Number,
         photo: { type: String, default: null },
+        aiscores: {
+            webdev: { type: Number, default: 0 },
+            aiml: { type: Number, default: 0 },
+            dsa: { type: Number, default: 0 },
+            appdev: { type: Number, default: 0 }
+        }
     
 },{timestamps:true});
 

@@ -32,7 +32,6 @@ export const createjob = async (req, res) => {
     companyj.jobs.push(newjob._id);
     await companyj.save();
 
-    // 🔥 EMAIL NOTIFICATION
     const users = await user.find({}, "email");
     const emails = users.map(u => u.email);
 
