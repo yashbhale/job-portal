@@ -1,36 +1,31 @@
-import {user} from "../models/user.js"
-import {parseResume} from "../utils/resumeParser.js"
-import {getAIScores} from "../utils/gemini.js"
+import { user } from "../models/user.js";
+import { parseResume } from "../utils/resumeParser.js";
+import { getAIScores } from "../utils/gemini.js";
 
-export const analyzeResume=async(req,res)=>{
+export const analyzeResume = async (req, res) => {
+  try {
+    const userId = req.id;
 
-try{
+    const curruser = await user.findById(userId);
 
-const userId=req.id;
+    if (!curruser.resume) {
+      return res.status(400).json({ message: "resume not uploaded" });
+    }
 
-const curruser=await user.findById(userId);
+    const resumeText = await parseResume(curruser.resume);
 
-if(!curruser.resume){
-return res.status(400).json({message:"resume not uploaded"});
-}
+    const scores = await getAIScores(resumeText);
 
-const resumeText=await parseResume(curruser.resume);
+    curruser.aiscores = scores;
 
-const scores=await getAIScores(resumeText);
+    await curruser.save();
 
-curruser.aiscores=scores;
-
-await curruser.save();
-
-res.json({
-message:"resume analyzed",
-scores
-});
-
-}
-catch(err){
-console.log(err);
-res.status(500).json({message:"analysis failed"});
-}
-
-}
+    res.json({
+      message: "resume analyzed",
+      scores,
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "analysis failed" });
+  }
+};
